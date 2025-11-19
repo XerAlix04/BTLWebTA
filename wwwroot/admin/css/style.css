@@ -242,6 +242,18 @@ body {
 }
 
 /* ===============================
+   CHARTS
+   =============================== */
+
+/* Fix lỗi Chart.js bị tràn màn hình */
+.chart-container {
+    position: relative;
+    height: 300px; /* Chiều cao cố định cho biểu đồ */
+    width: 100%;
+    overflow: hidden; /* Đảm bảo không bị tràn */
+}
+
+/* ===============================
    BUTTONS
    =============================== */
 

@@ -8,7 +8,7 @@ async function login() {
         return;
     }
 
-    // 🟢 KIỂM TRA ADMIN
+    // KIỂM TRA ADMIN
     if (user === "admin" && pass === "123") {
         alert("✅ Đăng nhập Admin thành công!");
         sessionStorage.setItem("userName", "admin");

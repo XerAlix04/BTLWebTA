@@ -85,25 +85,33 @@
                     <!-- Chart 1: New Users by Day -->
                     <div class="chart-card">
                         <h3>User Mới Theo Ngày</h3>
-                        <canvas id="newUsersChart" width="400" height="250"></canvas>
+                        <div class="chart-container">
+                            <canvas id="newUsersChart"></canvas>
+                        </div>
                     </div>
 
                     <!-- Chart 2: Learning Completion Rate -->
                     <div class="chart-card">
                         <h3>Tỷ Lệ Hoàn Thành Trung Bình (%)</h3>
-                        <canvas id="completionChart" width="400" height="250"></canvas>
+                        <div class="chart-container">
+                            <canvas id="completionChart"></canvas>
+                        </div>
                     </div>
 
                     <!-- Chart 3: User Status Distribution -->
                     <div class="chart-card">
                         <h3>Phân Bố Trạng Thái User</h3>
-                        <canvas id="statusChart" width="400" height="250"></canvas>
+                        <div class="chart-container">
+                            <canvas id="statusChart" width="400" height="250"></canvas>
+                        </div>
                     </div>
 
                     <!-- Chart 4: Course Popularity -->
                     <div class="chart-card">
                         <h3>Khóa Học Phổ Biến Nhất</h3>
-                        <canvas id="courseChart" width="400" height="250"></canvas>
+                        <div class="chart-container">
+                            <canvas id="courseChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -129,6 +137,7 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../js/mock-data.js"></script>
     <script src="../js/analytics.js"></script>
 </body>
