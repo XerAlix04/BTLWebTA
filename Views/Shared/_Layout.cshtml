@@ -61,6 +61,10 @@
                         <span class="nav-icon">📝</span>
                         <span>Thi thử</span>
                     </button>
+                    <button onclick="openTab('courses')" class="nav-btn" data-tab="courses">
+                        <span class="nav-icon">📚</span>
+                        <span>Khóa học</span>
+                    </button>
                     <button onclick="openTab('chatbot')" class="nav-btn" data-tab="chatbot">
                         <span class="nav-icon">🤖</span>
                         <span>Chatbot</span>
@@ -262,6 +266,7 @@
     <script src="~/js/practice.js"></script>
     <script src="~/js/chatbot.js"></script>
     <script src="~/js/init.js"></script>
+    <script src="~/js/courses.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
     <script src="~/js/realtime-chat.js"></script>
 

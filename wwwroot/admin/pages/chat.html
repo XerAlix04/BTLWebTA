@@ -10,27 +10,49 @@
 </head>
 <body>
     <div class="admin-container">
-        <!-- Sidebar -->
+        <!-- Sidebar Navigation -->
+        <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h1 class="logo">Admin Panel</h1>
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="../index.html" class="nav-link" data-module="dashboard">
-                        <span class="icon">📊</span> Dashboard
-                    </a></li>
-                    <li><a href="user-list.html" class="nav-link" data-module="users">
-                        <span class="icon">👥</span> Quản lý User
-                    </a></li>
-                    <li><a href="analytics.html" class="nav-link" data-module="analytics">
-                        <span class="icon">📈</span> Thống kê
-                    </a></li>
-                    <li><a href="chat.html" class="nav-link active" data-module="chat">
-                        <span class="icon">💬</span> Chat
-                    </a></li>
+                    <li>
+                        <a href="../index.html" class="nav-link active" data-module="dashboard">
+                            <span class="icon">📊</span> Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="user-list.html" class="nav-link" data-module="users">
+                            <span class="icon">👥</span> Quản lý User
+                        </a>
+                    </li>
+                    <li>
+                        <a href="analytics.html" class="nav-link" data-module="analytics">
+                            <span class="icon">📈</span> Thống kê
+                        </a>
+                    </li>
+                    <li>
+                        <a href="invoices.html" class="nav-link" data-module="analytics">
+                            <span class="icon">🧾</span> Hóa đơn bán
+                        </a>
+                    </li>
+                    <li>
+                        <a href="pending-invoices.html" class="nav-link" data-module="analytics">
+                            <span class="icon">⏳</span> Duyệt hóa đơn
+                        </a>
+                    </li>
+                    <li>
+                        <a href="chat.html" class="nav-link" data-module="chat">
+                            <span class="icon">💬</span> Chat
+                        </a>
+                    </li>
                 </ul>
             </nav>
+            <div class="sidebar-footer">
+                <button class="logout-btn">Đăng xuất</button>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -48,12 +70,10 @@
                 <!-- User List Sidebar -->
                 <aside class="chat-sidebar">
                     <div class="chat-search">
-                        <input 
-                            type="text" 
-                            id="userSearchInput" 
-                            placeholder="Tìm người..."
-                            class="chat-search-input"
-                        >
+                        <input type="text"
+                               id="userSearchInput"
+                               placeholder="Tìm người..."
+                               class="chat-search-input">
                     </div>
                     <div class="user-list" id="userList">
                         <!-- Sẽ được load bởi JavaScript -->
@@ -82,13 +102,11 @@
                     <!-- Message Input -->
                     <div class="chat-input-area">
                         <form id="messageForm" class="message-form">
-                            <input 
-                                type="text" 
-                                id="messageInput" 
-                                placeholder="Nhập tin nhắn..."
-                                class="message-input"
-                                disabled
-                            >
+                            <input type="text"
+                                   id="messageInput"
+                                   placeholder="Nhập tin nhắn..."
+                                   class="message-input"
+                                   disabled>
                             <button type="submit" class="send-btn" disabled>Gửi</button>
                         </form>
                     </div>
