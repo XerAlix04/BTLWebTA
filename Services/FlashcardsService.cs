@@ -58,6 +58,17 @@ namespace Project1.Services
             return null;
         }
 
+        public async Task<TuVungVM?> CreateVocabularyAndAddFlashcardAsync(TuVungVM model)
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/FlashcardsAPI/create-and-add", model);
+            if (response.IsSuccessStatusCode)
+            {
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<TuVungVM>>();
+                return apiResponse?.Data;
+            }
+            return null;
+        }
+
         public async Task<bool> RemoveFlashcardAsync(int tuVungId)
         {
             var response = await _httpClient.DeleteAsync($"/api/FlashcardsAPI/{tuVungId}");

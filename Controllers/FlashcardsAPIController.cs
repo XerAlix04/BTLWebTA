@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project1.Models;
 using Project1.Models.ViewModels;
+using System;
 
 namespace Project1.Controllers
 {
@@ -192,6 +193,53 @@ namespace Project1.Controllers
                 Success = true,
                 Data = vm
             });
+        }
+
+        
+        // Add the following action inside FlashcardsAPIController
+        [HttpPost("create-and-add")]
+        public async Task<ActionResult<ApiResponse<TuVungVM>>> CreateAndAdd([FromBody] TuVungVM model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Tu) || string.IsNullOrWhiteSpace(model.Nghia))
+            {
+                return BadRequest(new ApiResponse<TuVungVM> { Success = false, Message = "Word and meaning are required." });
+            }
+
+            var userId = GetUserId();
+
+            // Create new vocabulary
+            var tuVung = new TuVung
+            {
+                Tu = model.Tu,
+                Nghia = model.Nghia,
+                DuongDanAnh = model.HinhAnh,
+                ViDu = model.ViDu
+            };
+
+            _context.TuVungs.Add(tuVung);
+            await _context.SaveChangesAsync(); // saves and populates tuVung.MaTu
+
+            // Link to user
+            var ndtv = new NguoiDungTuVung
+            {
+                MaNguoiDung = userId,
+                MaTu = tuVung.MaTu,
+                NgayOnTapCuoi = DateTime.Now
+            };
+
+            _context.NguoiDungTuVungs.Add(ndtv);
+            await _context.SaveChangesAsync();
+
+            var vm = new TuVungVM
+            {
+                MaTu = tuVung.MaTu,
+                Tu = tuVung.Tu,
+                Nghia = tuVung.Nghia,
+                HinhAnh = tuVung.DuongDanAnh,
+                ViDu = tuVung.ViDu
+            };
+
+            return Ok(new ApiResponse<TuVungVM> { Success = true, Data = vm });
         }
 
         [HttpDelete("{tuVungId}")]

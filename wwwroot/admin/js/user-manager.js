@@ -314,33 +314,136 @@ function loadDashboardStats() {
 }
 
 // ===============================
-// LOGIC TRANG CHI TIẾT
+// LOGIC TRANG CHI TIẾT (ĐÃ FIX)
 // ===============================
 
 function loadUserDetailPage() {
+    // Lấy ID từ localStorage (được lưu khi click từ trang danh sách)
     const userId = parseInt(localStorage.getItem("selectedUserId"));
     const user = allUsers.find(u => u.id === userId);
 
     if (!user) {
-        alert("Không tìm thấy user!");
-        history.back();
+        alert("Không tìm thấy thông tin user!");
+        window.location.href = "user-list.html";
         return;
     }
 
-    // Điền dữ liệu (tương tự code cũ nhưng lấy từ 'user' đã cập nhật)
+    // 1. Điền thông tin cơ bản
     document.getElementById("userAvatar").src = user.avatar;
     document.getElementById("userName").textContent = user.name;
     document.getElementById("userEmail").textContent = user.email;
     document.getElementById("userId").textContent = `#${user.id}`;
-    document.getElementById("userRole").textContent = user.role;
 
-    // Hiển thị trạng thái với màu sắc
+    // Role & Status
+    document.getElementById("userRole").textContent = user.role === 'student' ? 'Học viên' :
+        (user.role === 'teacher' ? 'Giáo viên' : 'Quản trị viên');
+
     const statusBadge = document.getElementById("userStatus");
     statusBadge.textContent = getStatusLabel(user.status);
     statusBadge.className = `status-badge status-${user.status}`;
 
-    // Logic nút khóa/mở khóa ở trang chi tiết (nếu có nút hành động ở đây)
-    // ... (Giữ nguyên phần hiển thị progress bar của bạn)
+    // Ngày tháng (Sử dụng hàm formatDate từ mock-data.js hoặc fallback)
+    document.getElementById("userCreatedAt").textContent = typeof formatDate === 'function' ? formatDate(user.createdAt) : user.createdAt;
+    document.getElementById("userLastActive").textContent = user.lastActive;
+
+    // 2. Điền Tiến độ học tập (Progress Bars)
+    // Tính % hoàn thành bài học
+    const lessonPercent = user.lessonsTotal > 0 ? Math.round((user.lessonsCompleted / user.lessonsTotal) * 100) : 0;
+    updateProgressUI("lessons", lessonPercent, `${user.lessonsCompleted}/${user.lessonsTotal} bài`);
+
+    // Điểm kiểm tra (Giả sử quizScore là thang 100)
+    updateProgressUI("quiz", user.quizScore, `${user.quizScore}/100 điểm`);
+
+    // Khóa học hoàn thành (Giả sử mục tiêu là 10 khóa để full thanh)
+    const targetCourses = 10;
+    const coursePercent = Math.min((user.courseCompleted / targetCourses) * 100, 100);
+    updateProgressUI("course", coursePercent, `${user.courseCompleted} khóa`);
+
+    // 3. Render Lịch sử hoạt động
+    renderActivityHistory(user.activities);
+
+    // 4. Cấu hình các nút hành động (Footer buttons)
+    setupDetailButtons(user);
+}
+
+// Hàm phụ trợ: Cập nhật giao diện thanh tiến độ
+function updateProgressUI(type, percent, textValue) {
+    // type: 'lessons', 'quiz', 'course'
+    const bar = document.getElementById(`${type}Progress`);
+    const label = document.getElementById(`${type}Percent`);
+
+    if (bar && label) {
+        bar.style.width = `${percent}%`;
+        // Đổi màu thanh dựa trên % (Xanh lá nếu cao, Vàng nếu trung bình, Đỏ nếu thấp)
+        bar.style.backgroundColor = percent >= 80 ? '#1cc88a' : (percent >= 50 ? '#36b9cc' : '#f6c23e');
+        label.textContent = textValue; // Hiển thị text tùy chỉnh thay vì %
+    }
+}
+
+// Hàm phụ trợ: Render danh sách hoạt động
+function renderActivityHistory(activities) {
+    const container = document.getElementById("activityList");
+    if (!container) return;
+
+    container.innerHTML = ""; // Clear cũ
+
+    if (!activities || activities.length === 0) {
+        container.innerHTML = "<p style='color:#888; font-style:italic;'>Chưa có hoạt động nào gần đây.</p>";
+        return;
+    }
+
+    activities.forEach(act => {
+        const item = document.createElement("div");
+        item.className = "activity-item";
+        item.style.cssText = "display: flex; gap: 15px; padding: 10px 0; border-bottom: 1px solid #eee;";
+
+        item.innerHTML = `
+            <div style="font-weight: bold; color: #4e73df; min-width: 60px;">${act.time}</div>
+            <div style="color: #555;">${act.action}</div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+// Hàm phụ trợ: Gán sự kiện cho các nút ở trang chi tiết
+function setupDetailButtons(user) {
+    const btnContainer = document.querySelector(".action-buttons");
+    if (!btnContainer) return;
+
+    // Clear các nút cũ (để tránh gán sự kiện nhiều lần hoặc sai trạng thái)
+    btnContainer.innerHTML = "";
+
+    // Nút chỉnh sửa (Demo)
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn btn-primary";
+    editBtn.textContent = "Chỉnh sửa";
+    editBtn.onclick = () => alert("Chức năng chỉnh sửa đang phát triển!");
+
+    // Nút Reset Password
+    const resetBtn = document.createElement("button");
+    resetBtn.className = "btn btn-warning";
+    resetBtn.textContent = "Reset Password";
+    resetBtn.style.marginLeft = "10px";
+    resetBtn.onclick = () => resetPassword(user.id);
+
+    // Nút Khóa/Mở khóa (Logic động)
+    const actionBtn = document.createElement("button");
+    actionBtn.style.marginLeft = "10px";
+
+    if (user.status === 'banned') {
+        actionBtn.className = "btn btn-success";
+        actionBtn.textContent = "Mở khóa tài khoản";
+        actionBtn.onclick = () => confirmAction(user.id, 'unban');
+    } else {
+        actionBtn.className = "btn btn-danger";
+        actionBtn.textContent = "Khóa tài khoản";
+        actionBtn.onclick = () => confirmAction(user.id, 'ban');
+    }
+
+    // Append vào DOM
+    btnContainer.appendChild(editBtn);
+    btnContainer.appendChild(resetBtn);
+    btnContainer.appendChild(actionBtn);
 }
 
 // ===============================
