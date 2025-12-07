@@ -335,73 +335,101 @@
         </div>
 
         <!-- 🧠 TAB 6: CHATBOT -->
+        <!-- 🧠 TAB 6: CHATBOT -->
         <div id="chatbot" class="tab">
             <div class="card">
-                <h2>Chatbot hỗ trợ tiếng Anh</h2>
-                <p class="subtitle">Luyện tập giao tiếp tiếng Anh với trợ lý AI</p>
+                <div class="chatbot-container">
+                    <!-- Chat Sidebar -->
+                    <div class="chat-sidebar">
+                        <div class="sidebar-header">
+                            <h3 class="sidebar-title">💬 Cuộc trò chuyện</h3>
+                        </div>
 
-                <!-- Chat Controls -->
-                <div class="chat-controls" style="margin-bottom: 15px;">
-                    <button class="action" onclick="clearChat()">🗑️ Xóa chat</button>
-                    <button class="action" onclick="exportChat()">📥 Xuất chat</button>
-                    <span id="messageCount" class="message-count">💬 0 tin nhắn</span>
-                </div>
+                        <button class="new-chat-btn" onclick="createNewChat()">
+                            ➕ Trò chuyện mới
+                        </button>
 
-                <!-- User Info -->
-                <div class="user-info-card" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <h4>Thông tin người dùng</h4>
-                    <div class="user-info-form">
-                        <div style="display: flex; gap: 10px; align-items: end;">
-                            <div style="flex: 1;">
-                                <label for="username">Họ tên</label>
-                                <input type="text" id="username" placeholder="Nhập tên của bạn"
-                                       class="form-control" value="" />
-                            </div>
-                            <div style="flex: 1;">
-                                <label for="gender">Giới tính</label>
-                                <select id="gender" class="form-control">
-                                    <option value="">Chọn giới tính</option>
-                                    <option value="Male">Nam</option>
-                                    <option value="Female">Nữ</option>
-                                    <option value="Other">Khác</option>
-                                </select>
-                            </div>
-                            <div>
-                                <button class="action" onclick="updateUserInfo()">Cập nhật</button>
+                        <!-- Chat List -->
+                        <div id="chatList" class="chat-list">
+                            <div style="text-align: center; color: rgba(255,255,255,0.7); padding: 20px 0;">
+                                Đang tải...
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Chat Messages -->
-                <div id="chatMessages" class="chat-messages" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <div class="empty-chat" style="text-align: center; color: #666;">
-                        <div style="font-size: 48px;">💬</div>
-                        <h4>Chưa có tin nhắn nào</h4>
-                        <p>Gửi tin nhắn để bắt đầu trò chuyện!</p>
+                        <!-- Chat Actions -->
+                        <div class="chat-actions">
+                            <button onclick="exportAllChats()">📥 Xuất tất cả</button>
+                            <button onclick="deleteAllChats()" style="background: rgba(220,53,69,0.2); color: #ff6b6b; border-color: #ff6b6b;">
+                                🗑️ Xóa tất cả
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Chat Input -->
-                <div class="chat-input-form">
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="chatInput"
-                               placeholder="Hỏi tôi bất cứ điều gì về tiếng Anh..."
-                               class="form-control" style="flex: 1;" />
-                        <button class="action" onclick="sendChatMessage()">
-                            <span>📤 Gửi</span>
-                        </button>
-                    </div>
-                </div>
+                    <!-- Main Chat Area -->
+                    <div class="chat-main">
+                        <!-- Header -->
+                        <div class="chat-header">
+                            <h2 id="currentChatTitle" class="chat-title">English Assistant 🤖</h2>
+                            <div class="chat-controls">
+                                <button onclick="renameCurrentChat()">✏️ Đổi tên</button>
+                                <button onclick="exportCurrentChat()">📥 Xuất</button>
+                                <button class="btn-danger" onclick="deleteCurrentChat()">🗑️ Xóa</button>
+                            </div>
+                        </div>
 
-                <!-- Chat Suggestions -->
-                <div class="chat-suggestions" style="margin-top: 15px;">
-                    <h5>💡 Thử hỏi:</h5>
-                    <div class="suggestion-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button type="button" class="suggestion-chip" onclick="useSuggestion('Tôi có thể làm gì để cải thiện khả năng phát âm?')">Bí kíp phát âm</button>
-                        <button type="button" class="suggestion-chip" onclick="useSuggestion('Khác biệt giữa make và do là gì?')">Hỗ trợ ngữ pháp</button>
-                        <button type="button" class="suggestion-chip" onclick="useSuggestion('Bạn có thể cho tôi vài ví dụ để luyện tập giao tiếp không?')">Luyện tập giao tiếp</button>
-                        <button type="button" class="suggestion-chip" onclick="useSuggestion('Giải thích cho tôi về thì hiện tại đơn')">Giải thích thì</button>
+                        <!-- User Info Card -->
+                        <div class="user-info-card">
+                            <h4>👤 Thông tin của bạn</h4>
+                            <div class="user-info-form">
+                                <input type="text" id="username" placeholder="Nhập tên của bạn" />
+                                <button onclick="updateUserInfo()">Cập nhật</button>
+                            </div>
+                            <input type="hidden" id="gender" value="Other" />
+                        </div>
+
+                        <!-- Chat Messages -->
+                        <div id="chatMessages" class="chat-messages">
+                            <div class="empty-chat">
+                                <div>💬</div>
+                                <h4>Chưa có cuộc trò chuyện</h4>
+                                <p>Hãy gửi tin nhắn để bắt đầu!</p>
+                            </div>
+                        </div>
+
+                        <!-- Chat Input -->
+                        <div class="chat-input-form">
+                            <input 
+                                type="text" 
+                                id="chatInput" 
+                                placeholder="Hỏi tôi bất cứ điều gì về tiếng Anh..." 
+                            />
+                            <button onclick="sendChatMessage()">📤</button>
+                        </div>
+
+                        <!-- Chat Info & Suggestions -->
+                        <div class="chat-info-row" style="margin-bottom: 10px;">
+                            <span id="messageCount" class="message-count">💬 0 tin nhắn</span>
+                            <span id="chatInfo" style="color: #666; font-size: 12px;"></span>
+                        </div>
+
+                        <!-- Suggestions -->
+                        <div class="chat-suggestions">
+                            <h5>💡 Thử hỏi:</h5>
+                            <div class="suggestion-chips">
+                                <button type="button" class="suggestion-chip" onclick="useSuggestion('Tôi có thể làm gì để cải thiện khả năng phát âm?')">
+                                    Bí kíp phát âm
+                                </button>
+                                <button type="button" class="suggestion-chip" onclick="useSuggestion('Khác biệt giữa make và do là gì?')">
+                                    Hỗ trợ ngữ pháp
+                                </button>
+                                <button type="button" class="suggestion-chip" onclick="useSuggestion('Bạn có thể cho tôi vài ví dụ để luyện tập giao tiếp không?')">
+                                    Giao tiếp
+                                </button>
+                                <button type="button" class="suggestion-chip" onclick="useSuggestion('Giải thích cho tôi về thì hiện tại đơn')">
+                                    Giải thích thì
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -502,12 +530,60 @@
             </div>
         </div>
 
+        @* <!-- 💬 TAB 8: CHAT VỚI NGƯỜI DÙNG -->
+        <div id="user-admin-chat" class="tab">
+            <div class="card">
+                <h2>💬 Chat với mọi người</h2>
+                <p class="subtitle">Gửi tin nhắn cho bất kỳ người dùng nào</p>
 
+                <div class="user-admin-chat-container">
+                    <!-- Users List Sidebar -->
+                    <aside class="chat-admins-sidebar">
+                        <div class="sidebar-search">
+                            <input type="text" id="userChatSearch" placeholder="🔍 Tìm người..." class="search-input" />
+                        </div>
+                        <div id="userChatAdminsList" class="admins-list">
+                            <div class="loading">⏳ Đang tải...</div>
+                        </div>
+                    </aside>
+
+                    <!-- Chat Area -->
+                    <div class="user-chat-area">
+                        <!-- Header -->
+                        <div class="user-chat-header">
+                            <div class="chat-info">
+                                <img id="chatWithAdminAvatar" src="https://via.placeholder.com/44" alt="Avatar" class="chat-avatar" />
+                                <div class="chat-details">
+                                    <h4 id="chatWithAdminName">Chọn người để chat</h4>
+                                    <small id="chatWithAdminStatus">Offline</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Messages -->
+                        <div id="userChatMessages" class="user-messages-area">
+                            <div class="empty-chat-state">
+                                <p>💬 Chọn người để bắt đầu trò chuyện</p>
+                            </div>
+                        </div>
+
+                        <!-- Input -->
+                        <div class="user-chat-input">
+                            <form id="userChatForm" class="input-form">
+                                <input type="text" id="userMessageInput" placeholder="Nhập tin nhắn..." class="message-input" disabled />
+                                <button type="submit" id="userSendBtn" class="send-button" disabled>📤</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> *@
     </div>
 </section>
 
 @section Scripts {
     <script src="~/js/main.js"></script>
     <script src="~/js/realtime-chat.js"></script>
+    <script src="~/js/user-admin-chat.js"></script>
 }
 

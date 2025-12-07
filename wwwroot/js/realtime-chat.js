@@ -6,13 +6,15 @@
 // ==================== STATE ====================
 let selectedUserId = null;
 let currentUserMessages = {};
+let adminMessages = [];
 let allChatUsers = [
+    { id: 0, name: "Admin", avatar: "https://i.pravatar.cc/150?img=0", isOnline: true },
     { id: 1, name: "Nguyễn Văn A", avatar: "https://i.pravatar.cc/150?img=1", isOnline: true },
     { id: 2, name: "Trần Thị B", avatar: "https://i.pravatar.cc/150?img=2", isOnline: true },
     { id: 3, name: "Phạm Văn C", avatar: "https://i.pravatar.cc/150?img=3", isOnline: false },
     { id: 4, name: "Lê Minh D", avatar: "https://i.pravatar.cc/150?img=4", isOnline: true },
-    { id: 5, name: "Hoàng Thanh E", avatar: "https://i.pravatar.cc/150?img=5", isOnline: false },
-    { id: 6, name: "Đỗ Hữu F", avatar: "https://i.pravatar.cc/150?img=6", isOnline: true },
+    //{ id: 5, name: "Hoàng Thanh E", avatar: "https://i.pravatar.cc/150?img=5", isOnline: false },
+    //{ id: 6, name: "Đỗ Hữu F", avatar: "https://i.pravatar.cc/150?img=6", isOnline: true },
 ];
 
 // ==================== INITIALIZATION ====================
@@ -20,6 +22,7 @@ let allChatUsers = [
  * Khởi tạo module Chat Realtime
  */
 function initRealtimeChat() {
+    loadAdminChatHistory();
     loadRealtimeChatUsers();
     setupRealtimeChatEventListeners();
 }
@@ -29,6 +32,33 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initRealtimeChat);
 } else {
     initRealtimeChat();
+}
+
+// ==================== ADMIN CHAT STORAGE ====================
+/**
+ * Lưu lịch sử chat với admin vào localStorage
+ */
+function saveAdminChatHistory() {
+    localStorage.setItem('adminChatHistory', JSON.stringify(adminMessages));
+}
+
+/**
+ * Tải lịch sử chat với admin từ localStorage
+ */
+function loadAdminChatHistory() {
+    const saved = localStorage.getItem('adminChatHistory');
+    if (saved) {
+        adminMessages = JSON.parse(saved);
+    }
+}
+
+/**
+ * Thêm tin nhắn vào lịch sử admin và lưu
+ * @param {object} message - Đối tượng tin nhắn
+ */
+function addAdminMessage(message) {
+    adminMessages.push(message);
+    saveAdminChatHistory();
 }
 
 // ==================== LOAD USERS ====================
@@ -78,7 +108,7 @@ function selectRealtimeChatUser(userId, user) {
     document.getElementById('selectedUserAvatar').src = user.avatar;
     document.getElementById('selectedUserName').textContent = escapeHtml(user.name);
     document.getElementById('selectedUserStatus').textContent = 
-        user.isOnline ? 'Đang hoạt động' : 'Ngoại tuyến';
+        user.isOnline ? 'Đang hoạt động' : 'Ngoại tuyến';   
     
     // Cập nhật online indicator
     const indicator = document.getElementById('onlineIndicator');
@@ -102,11 +132,18 @@ function loadRealtimeMessages(userId) {
     const messagesArea = document.getElementById('realtimeChatMessages');
     messagesArea.innerHTML = '';
 
-    if (!currentUserMessages[userId]) {
-        currentUserMessages[userId] = [];
+    let messages = [];
+
+    // Admin chat sử dụng adminMessages, người dùng khác sử dụng currentUserMessages
+    if (userId === 0) {
+        messages = adminMessages;
+    } else {
+        if (!currentUserMessages[userId]) {
+            currentUserMessages[userId] = [];
+        }
+        messages = currentUserMessages[userId];
     }
 
-    const messages = currentUserMessages[userId];
     if (messages.length === 0) {
         messagesArea.innerHTML = `
             <div class="empty-messages">
@@ -170,7 +207,7 @@ function renderRealtimeMessage(message, scroll = true) {
 function sendRealtimeMessage(event) {
     event.preventDefault();
 
-    if (!selectedUserId) {
+    if (!selectedUserId && selectedUserId !== 0) {
         alert('Vui lòng chọn một người để chat');
         return;
     }
@@ -180,12 +217,6 @@ function sendRealtimeMessage(event) {
 
     if (!messageText) return;
 
-    // Khởi tạo mảng tin nhắn nếu chưa có
-    if (!currentUserMessages[selectedUserId]) {
-        currentUserMessages[selectedUserId] = [];
-    }
-
-    // Thêm tin nhắn
     const message = {
         id: Date.now(),
         text: messageText,
@@ -193,16 +224,30 @@ function sendRealtimeMessage(event) {
         timestamp: new Date()
     };
 
-    currentUserMessages[selectedUserId].push(message);
-    renderRealtimeMessage(message);
+    // Xử lý admin chat
+    if (selectedUserId === 0) {
+        addAdminMessage(message);
+        renderRealtimeMessage(message);
+        messageInput.value = '';
+        
+        // Admin phản hồi sau một khoảng thời gian
+        setTimeout(() => {
+            receiveAdminMessage();
+        }, 1000 + Math.random() * 1000);
+    } else {
+        // Xử lý chat với người dùng khác
+        if (!currentUserMessages[selectedUserId]) {
+            currentUserMessages[selectedUserId] = [];
+        }
 
-    // Clear input
-    messageInput.value = '';
+        currentUserMessages[selectedUserId].push(message);
+        renderRealtimeMessage(message);
+        messageInput.value = '';
 
-    // Mô phỏng phản hồi
-    setTimeout(() => {
-        receiveRealtimeMessage();
-    }, 1000 + Math.random() * 1000);
+        setTimeout(() => {
+            receiveRealtimeMessage();
+        }, 1000 + Math.random() * 1000);
+    }
 }
 
 // ==================== RECEIVE MESSAGE ====================
@@ -234,6 +279,34 @@ function receiveRealtimeMessage() {
     };
 
     currentUserMessages[selectedUserId].push(message);
+    renderRealtimeMessage(message);
+}
+
+/**
+ * Mô phỏng nhận tin nhắn từ admin
+ */
+function receiveAdminMessage() {
+    const adminResponses = [
+        'Cảm ơn bạn đã liên hệ! 😊',
+        'Tôi sẽ giúp bạn ngay. 👍',
+        'Có gì tôi có thể hỗ trợ? 💡',
+        'Thông tin của bạn đã được ghi nhận.',
+        'Hãy chờ tôi xử lý nhé!',
+        'Bạn có thêm câu hỏi nào không? 🤔',
+        'Tất cả đã ổn định, cảm ơn bạn!',
+        'Mình sẽ xem xét và phản hồi sớm!'
+    ];
+
+    const randomResponse = adminResponses[Math.floor(Math.random() * adminResponses.length)];
+
+    const message = {
+        id: Date.now(),
+        text: randomResponse,
+        fromMe: false,
+        timestamp: new Date()
+    };
+
+    addAdminMessage(message);
     renderRealtimeMessage(message);
 }
 

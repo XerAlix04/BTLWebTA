@@ -7,21 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\admin\css\components.css" />
-    <None Include="wwwroot\admin\css\responsive.css" />
-    <None Include="wwwroot\admin\css\style.css" />
-    <None Include="wwwroot\admin\index.html" />
-    <None Include="wwwroot\admin\js\analytics.js" />
-    <None Include="wwwroot\admin\js\chat.js" />
-    <None Include="wwwroot\admin\js\mock-data.js" />
-    <None Include="wwwroot\admin\js\user-manager.js" />
-    <None Include="wwwroot\admin\pages\analytics.html" />
-    <None Include="wwwroot\admin\pages\chat.html" />
-    <None Include="wwwroot\admin\pages\user-detail.html" />
-    <None Include="wwwroot\admin\pages\user-list.html" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Gemini.NET" Version="3.6.0" />
     <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.46.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />

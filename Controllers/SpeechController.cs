@@ -1,20 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.CognitiveServices.Speech;
-using Microsoft.CognitiveServices.Speech.Audio;
-using Microsoft.CognitiveServices.Speech.PronunciationAssessment;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Project1.Controllers
 {
     public class SpeechController : Controller
     {
-        // 🔑 Thông tin Azure
-        private readonly string _azureKey = "EPW0olvc2ZxkUTQyrp3y2bReCMT5KSmdm91jm6ulDYeRmNikFnDTJQQJ99BJAC3pKaRXJ3w3AAAYACOGFnFJ";
-        private readonly string _azureRegion = "eastasia";
+        // 🔑 Deepgram API Key
+        private readonly string _deepgramKey = "4d44c570b42a0511e99eb6d19ce73d125553716e";
 
         // 📘 Danh sách từ luyện phát âm
         private static readonly List<string> WordList = new()
@@ -56,90 +56,150 @@ namespace Project1.Controllers
         }
 
         /// <summary>
-        /// 📦 Gửi file âm thanh + referenceText để Azure chấm điểm
+        /// 📦 Gửi file âm thanh + referenceText để Deepgram chấm điểm
         /// </summary>
         [HttpPost]
         [Route("Speech/Check")]
         public async Task<IActionResult> Check(IFormFile audio, string referenceText)
         {
             if (audio == null || audio.Length == 0)
-                return BadRequest("❌ Không có file âm thanh được tải lên.");
+                return BadRequest("Không có file âm thanh được gửi lên.");
 
             if (string.IsNullOrWhiteSpace(referenceText))
-                return BadRequest("❌ Thiếu referenceText — không biết bạn đang đọc từ nào.");
+                return BadRequest("Thiếu referenceText.");
 
-            // ✅ B1: Lưu file gốc
+            // Tạo thư mục lưu
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/audio");
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
-            var originalFilePath = Path.Combine(uploadsFolder, Path.GetFileName(audio.FileName));
+            // 🔥 Tên file an toàn GUID (tránh lỗi overwrite)
+            var safeFileName = Guid.NewGuid() + Path.GetExtension(audio.FileName);
+            var originalFilePath = Path.Combine(uploadsFolder, safeFileName);
+
+            // Lưu file gốc
             using (var stream = new FileStream(originalFilePath, FileMode.Create))
             {
                 await audio.CopyToAsync(stream);
             }
 
-            // ✅ B2: Chuyển sang WAV PCM 16kHz
+            // Convert sang WAV PCM16 16kHz mono
             var wavFilePath = Path.Combine(
                 uploadsFolder,
                 Path.GetFileNameWithoutExtension(originalFilePath) + "_converted.wav"
             );
-            ConvertToWavPcm16(originalFilePath, wavFilePath);
 
-            // ✅ B3: Gửi sang Azure chấm điểm
-            var result = await AssessPronunciationAsync(wavFilePath, referenceText);
+            try
+            {
+                ConvertToWavPcm16(originalFilePath, wavFilePath);
+            }
+            catch
+            {
+                ViewBag.ScoreResult = "<span style='color:red;'>❌ Lỗi khi chuyển đổi âm thanh.</span>";
+                return View("Result");
+            }
 
-            ViewBag.ScoreResult = result;
+            // Gọi Deepgram
+            string transcript = "";
+            try
+            {
+                transcript = await TranscribeWithDeepgramAsync(wavFilePath);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ScoreResult = $"<span style='color:red;'>❌ Lỗi khi chấm điểm: {ex.Message}</span>";
+                return View("Result");
+            }
+
+            // Tính điểm
+            double score = CalculateSimpleAccuracy(transcript, referenceText);
+
+            // Trả về View
+            ViewBag.ScoreResult = $@"
+                <b>🔹 Từ cần đọc:</b> {referenceText}<br/>
+                <b>🗣️ Bạn phát âm:</b> {transcript}<br/>
+                <b>🎯 Điểm accuracy:</b> {score:F1}%";
+
             ViewBag.AudioFile = "/audio/" + Path.GetFileName(wavFilePath);
             ViewBag.RandomWord = referenceText;
 
             return View("Result");
         }
 
-        // 🔉 Chuyển file về chuẩn WAV PCM16 16kHz mono
+        // Chuyển file sang WAV PCM16 16kHz mono
         private void ConvertToWavPcm16(string inputPath, string outputPath)
         {
-            using var reader = new AudioFileReader(inputPath);
-            var newFormat = new WaveFormat(16000, 16, 1);
-            using var conversionStream = new MediaFoundationResampler(reader, newFormat);
-            WaveFileWriter.CreateWaveFile(outputPath, conversionStream);
+            using var reader = new AudioFileReader(inputPath); // hỗ trợ MP3/MP4/WAV
+
+            var targetFormat = new WaveFormat(16000, 16, 1); // PCM16, mono, 16kHz
+            var resampler = new WdlResamplingSampleProvider(reader, targetFormat.SampleRate);
+
+            // Convert stereo → mono nếu file có 2 kênh
+            ISampleProvider monoProvider = reader.WaveFormat.Channels == 1
+                ? resampler
+                : new StereoToMonoSampleProvider(resampler);
+
+            // Ghi file WAV PCM16 chuẩn
+            WaveFileWriter.CreateWaveFile16(outputPath, monoProvider);
         }
 
-        // 🧠 Chấm phát âm bằng Azure Speech
-        private async Task<string> AssessPronunciationAsync(string audioPath, string referenceText)
+
+        // Gọi Deepgram
+        private async Task<string> TranscribeWithDeepgramAsync(string wavPath)
         {
-            var speechConfig = SpeechConfig.FromSubscription(_azureKey, _azureRegion);
-            speechConfig.SpeechRecognitionLanguage = "en-US";
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Token", _deepgramKey);
 
-            using var audioConfig = AudioConfig.FromWavFileInput(audioPath);
-            using var recognizer = new SpeechRecognizer(speechConfig, audioConfig);
+            // ⚠️ Sửa: Phải gọi System.IO.File
+            var audioBytes = await System.IO.File.ReadAllBytesAsync(wavPath);
 
-            var pronunciationConfig = new PronunciationAssessmentConfig(
-                referenceText,
-                GradingSystem.HundredMark,
-                Granularity.Phoneme,
-                enableMiscue: true
+            // 🆗 MIME chuẩn cho WAV PCM16
+            using var content = new ByteArrayContent(audioBytes);
+            content.Headers.ContentType = new MediaTypeHeaderValue("audio/wav");
+            content.Headers.ContentType.Parameters.Add(new NameValueHeaderValue("codec", "pcm_s16le"));
+
+            var response = await httpClient.PostAsync(
+                "https://api.deepgram.com/v1/listen?model=general&language=en-US&encoding=linear16&sample_rate=16000",
+                content
             );
-            pronunciationConfig.ApplyTo(recognizer);
 
-            var result = await recognizer.RecognizeOnceAsync();
+            var json = await response.Content.ReadAsStringAsync();
 
-            if (result.Reason == ResultReason.RecognizedSpeech)
+            if (!response.IsSuccessStatusCode)
+                throw new Exception("❌ Lỗi Deepgram: " + json);
+
+            using var doc = JsonDocument.Parse(json);
+
+            return doc.RootElement
+                .GetProperty("results")
+                .GetProperty("channels")[0]
+                .GetProperty("alternatives")[0]
+                .GetProperty("transcript")
+                .GetString();
+        }
+
+
+
+
+
+        // Tính điểm đơn giản
+        private double CalculateSimpleAccuracy(string spoken, string reference)
+        {
+            if (string.IsNullOrWhiteSpace(spoken))
+                return 0;
+
+            var spokenWords = spoken.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var referenceWords = reference.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            int correct = 0;
+            foreach (var word in referenceWords)
             {
-                var pronResult = PronunciationAssessmentResult.FromResult(result);
-                return $@"
-                    <b>🔹 Từ cần đọc:</b> {referenceText}<br/>
-                    <b>🗣️ Bạn phát âm:</b> {result.Text}<br/>
-                    <b>🎯 Điểm tổng:</b> {pronResult.PronunciationScore:F1}<br/>
-                    <b>Accuracy:</b> {pronResult.AccuracyScore:F1}<br/>
-                    <b>Fluency:</b> {pronResult.FluencyScore:F1}<br/>
-                    <b>Completeness:</b> {pronResult.CompletenessScore:F1}
-                ";
+                if (Array.Exists(spokenWords, w => w == word))
+                    correct++;
             }
-            else
-            {
-                return $"❌ Không nhận diện được giọng nói. Lý do: {result.Reason}";
-            }
+
+            return 100.0 * correct / referenceWords.Length;
         }
     }
 }
