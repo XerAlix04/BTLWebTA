@@ -387,12 +387,12 @@ document.getElementById("btnOcr")?.addEventListener("click", uploadAndRecognize)
 // --- QUIZ / EXAM FLOW IMPLEMENTATION ---
 
 // Quiz state
-let quizQuestions = []; // each { id, question, choices: {A,B,C,D}, correct: 'A' }
-let currentIndex = 0;
-let totalQuestions = 10;
-let correctCount = 0;
-let answered = false;
-let autoAdvanceTimeout = 800; // ms
+//let quizQuestions = []; // each { id, question, choices: {A,B,C,D}, correct: 'A' }
+//let currentIndex = 0;
+//let totalQuestions = 10;
+//let correctCount = 0;
+//let answered = false;
+//let autoAdvanceTimeout = 800; // ms
 
 // Expose functions globally for inline handlers
 window.startQuiz = startQuiz;
@@ -543,16 +543,16 @@ async function finishQuiz() {
 // FLASHCARDS FUNCTIONALITY WITH PAGINATION
 // ======================
 
-let flashcards = [];
-let currentPage = 1;
-let pageSize = 10; // Number of flashcards per page
-let totalPages = 1;
-let totalCount = 0;
-let practiceSession = null;
-let currentPracticeWord = null;
-let selectedChoice = null;
-let maxAttempts = 2; // Number of attempts allowed per exercise
-let incorrectAnswers = []; // Track incorrect answers for retry
+//let flashcards = [];
+//let currentPage = 1;
+//let pageSize = 10; // Number of flashcards per page
+//let totalPages = 1;
+//let totalCount = 0;
+//let practiceSession = null;
+//let currentPracticeWord = null;
+//let selectedChoice = null;
+//let maxAttempts = 2; // Number of attempts allowed per exercise
+//let incorrectAnswers = []; // Track incorrect answers for retry
 
 
 // Load user's flashcards with pagination
@@ -1745,7 +1745,7 @@ function exportAllChats() {
 }
 
 // Export chat
-function exportChat() {
+function exportChat(chat) {
     let exportContent = `English Assistant Chat Export\n`;
     exportContent += `=============================\n`;
     exportContent += `Title: ${chat.title}\n`;
@@ -1786,6 +1786,11 @@ function useSuggestion(question) {
     document.getElementById('chatInput').focus();
 }
 
+// Thêm đoạn này vào cuối file JS chứa code Chatbot
+window.deleteCurrentChat = deleteCurrentChat;
+window.renameCurrentChat = renameCurrentChat;
+window.exportCurrentChat = exportCurrentChat;
+window.createNewChat = createNewChat;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function () {
